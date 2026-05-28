@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: qvault-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - SURREALDB_URL=ws://surrealdb:8000/rpc
+      - SURREALDB_NS=qvault
+      - SURREALDB_DB=qvault
+      - SURREALDB_USER=root
+      - SURREALDB_PASS=${SURREALDB_PASS}
+      - WEBAUTHN_RP_NAME=QVault
+      - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID}
+      - WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN}
+      - SESSION_SECRET=${SESSION_SECRET}
+    depends_on:
+      - surrealdb
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: qvault-surrealdb
+    volumes:
+      - surrealdb-data:/data
+    command: start --user root --pass ${SURREALDB_PASS} file:/data/qvault.db
+    healthcheck:
+      test: ["CMD", "surreal", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  surrealdb-data:

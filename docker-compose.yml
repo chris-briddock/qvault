@@ -1,0 +1,18 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: qvault-surrealdb
+    user: root
+    ports:
+      - "8000:8000"
+    volumes:
+      - surrealdb-data:/data
+    command: start --user root --pass root surrealkv:///data/qvault.db
+    healthcheck:
+      test: ["CMD", "surreal", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  surrealdb-data:
