@@ -1,9 +1,34 @@
-version: "3.8"
-
 services:
+  migrator:
+    build:
+      context: .
+      target: migrator
+    container_name: qvault-migrator
+    networks:
+      - qvault-net
+    environment:
+      - NODE_ENV=production
+      - SURREALDB_URL=ws://surrealdb:8000/rpc
+      - SURREALDB_NS=qvault
+      - SURREALDB_DB=qvault
+      - SURREALDB_USER=root
+      - SURREALDB_PASS=${SURREALDB_PASS}
+      - WEBAUTHN_RP_NAME=QVault
+      - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID}
+      - WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - SESSION_MAX_AGE=${SESSION_MAX_AGE}
+      - SERVER_SECRET=${SERVER_SECRET}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+    depends_on:
+      - surrealdb
+
   app:
     build: .
     container_name: qvault-app
+    networks:
+      - qvault-net
     ports:
       - "3000:3000"
     environment:
@@ -17,15 +42,23 @@ services:
       - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID}
       - WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN}
       - SESSION_SECRET=${SESSION_SECRET}
+      - SESSION_MAX_AGE=${SESSION_MAX_AGE}
+      - SERVER_SECRET=${SERVER_SECRET}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     depends_on:
       - surrealdb
+      - migrator
 
   surrealdb:
     image: surrealdb/surrealdb:latest
     container_name: qvault-surrealdb
+    user: root
+    networks:
+      - qvault-net
     volumes:
       - surrealdb-data:/data
-    command: start --user root --pass ${SURREALDB_PASS} file:/data/qvault.db
+    command: start --user root --pass ${SURREALDB_PASS} surrealkv:/data/qvault.db
     healthcheck:
       test: ["CMD", "surreal", "version"]
       interval: 10s
@@ -34,3 +67,7 @@ services:
 
 volumes:
   surrealdb-data:
+
+networks:
+  qvault-net:
+    driver: bridge

@@ -8,11 +8,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the application
-FROM base AS builder
+# Source stage used by both migrator and builder
+FROM deps AS source
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Migration runner stage
+FROM source AS migrator
+ENV NODE_ENV=production
+CMD ["npx", "tsx", "migrations/runner.ts", "up"]
+
+# Build the application
+FROM source AS builder
 RUN npm run build
 
 # Production image

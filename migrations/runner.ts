@@ -2,6 +2,59 @@ import { getDb, closeDb } from "../src/lib/db";
 import { logger } from "../src/lib/logger";
 import { readdir } from "fs/promises";
 import { join } from "path";
+import { Surreal } from "surrealdb";
+import { env } from "../src/lib/env";
+
+async function connectRoot(): Promise<Surreal> {
+  const surreal = new Surreal();
+  await surreal.connect(env.SURREALDB_URL, {
+    authentication: {
+      username: env.SURREALDB_USER,
+      password: env.SURREALDB_PASS,
+    },
+  });
+  return surreal;
+}
+
+async function ensureNamespace(): Promise<void> {
+  const surreal = await connectRoot();
+  try {
+    try {
+      await surreal.query(`DEFINE NAMESPACE IF NOT EXISTS ${env.SURREALDB_NS}`);
+    } catch {
+      await surreal.query(`DEFINE NAMESPACE ${env.SURREALDB_NS}`);
+    }
+    logger.info("Namespace ensured", { ns: env.SURREALDB_NS });
+  } finally {
+    await surreal.close();
+  }
+}
+
+async function connectWithNamespace(): Promise<Surreal> {
+  const surreal = new Surreal();
+  await surreal.connect(env.SURREALDB_URL, {
+    namespace: env.SURREALDB_NS,
+    authentication: {
+      username: env.SURREALDB_USER,
+      password: env.SURREALDB_PASS,
+    },
+  });
+  return surreal;
+}
+
+async function ensureDatabase(): Promise<void> {
+  const surreal = await connectWithNamespace();
+  try {
+    try {
+      await surreal.query(`DEFINE DATABASE IF NOT EXISTS ${env.SURREALDB_DB}`);
+    } catch {
+      await surreal.query(`DEFINE DATABASE ${env.SURREALDB_DB}`);
+    }
+    logger.info("Database ensured", { ns: env.SURREALDB_NS, db: env.SURREALDB_DB });
+  } finally {
+    await surreal.close();
+  }
+}
 
 interface MigrationModule {
   up: () => Promise<void>;
@@ -43,14 +96,14 @@ async function removeMigrationRecord(name: string): Promise<void> {
 }
 
 async function loadMigration(file: string): Promise<MigrationModule> {
-  const module = await import(join(process.cwd(), "migrations", file));
-  if (typeof module.up !== "function") {
+  const mod = await import(join(process.cwd(), "migrations", file));
+  if (typeof mod.up !== "function") {
     throw new Error(`Migration ${file} does not export an 'up' function`);
   }
-  if (typeof module.down !== "function") {
+  if (typeof mod.down !== "function") {
     throw new Error(`Migration ${file} does not export a 'down' function`);
   }
-  return module as MigrationModule;
+  return mod as MigrationModule;
 }
 
 async function migrateUp(): Promise<void> {
@@ -106,6 +159,8 @@ async function main() {
   const direction = process.argv[2] || "up";
   const steps = parseInt(process.argv[3] || "1", 10);
 
+  await ensureNamespace();
+  await ensureDatabase();
   await ensureMigrationsTable();
 
   if (direction === "up") {

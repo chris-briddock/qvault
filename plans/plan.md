@@ -15,6 +15,7 @@ graph TD
 ```
 
 ### Zero-Knowledge Flow
+
 1. User authenticates with passkey (no password)
 2. Client derives or retrieves a master encryption key
 3. All vault data is encrypted/decrypted exclusively in the browser
@@ -24,11 +25,12 @@ graph TD
 
 ## Phase 1: Project Setup & Infrastructure
 
-**Status: ✅ Complete**
+Status: Complete
 
 **Goal:** Initialize the Next.js 16 project, configure tooling, and set up local SurrealDB via Docker.
 
-### Completed Tasks
+### Phase 1 Completed Tasks
+
 - [x] Initialize Next.js 16 with App Router, TypeScript, and Tailwind CSS v4
 - [x] Configure ESLint (`eslint.config.mjs`, `eslint-config-next`)
 - [x] Set up Docker Compose with SurrealDB service (`docker-compose.yml`, `docker-compose.prod.yml`)
@@ -38,7 +40,8 @@ graph TD
 - [x] Verify connectivity between Next.js app and SurrealDB container via health check endpoint
 - [x] Add `package.json` scripts: `dev`, `build`, `db:up`, `db:down`, `db:migrate`, `db:rollback`, `typecheck`
 
-### Key Decisions
+### Phase 1 Key Decisions
+
 - **App Router:** Required for Server Actions and API route colocation.
 - **SurrealDB Protocol:** Use the official JS SDK with WebSocket connection for real-time capabilities.
 - **Tailwind CSS v4:** Used with PostCSS plugin (`@tailwindcss/postcss`).
@@ -47,7 +50,7 @@ graph TD
 
 ## Phase 2: Database Design & Schema
 
-**Status: ✅ Complete**
+Status: Complete
 
 **Goal:** Design and implement SurrealDB tables, relations, and access controls.
 
@@ -110,7 +113,8 @@ DEFINE FIELD color ON vault_group TYPE option<string>;
 DEFINE FIELD created_at ON vault_group TYPE option<datetime> DEFAULT time::now();
 ```
 
-### Completed Tasks
+### Phase 2 Completed Tasks
+
 - [x] Migration files created (`migrations/0001_initial_schema.ts`, `0002_add_challenge_table.ts`, `0003_add_pq_fields.ts`, `0004_add_vault_groups.ts`)
 - [x] Build a schema migration/initialization script (`migrations/runner.ts`) with up/down support and `_migration` tracking table
 - [x] Implement a typed SurrealDB connection wrapper (`src/lib/db.ts`) with circuit breaker, retry logic, and health checks
@@ -121,7 +125,7 @@ DEFINE FIELD created_at ON vault_group TYPE option<datetime> DEFAULT time::now()
 
 ## Phase 3: Passkey Authentication (WebAuthn)
 
-**Status: ✅ Complete**
+Status: Complete
 
 **Goal:** Implement username + passkey registration and login with no traditional passwords.
 
@@ -145,7 +149,8 @@ sequenceDiagram
     N->>B: Set session cookie, return success
 ```
 
-### Completed Tasks
+### Phase 3 Completed Tasks
+
 - [x] Configure WebAuthn Relying Party (RP) settings in `src/lib/env.ts` (origin, RP ID, RP name)
 - [x] Implement `POST /api/auth/register-options` endpoint
 - [x] Implement `POST /api/auth/register-verify` endpoint
@@ -158,7 +163,8 @@ sequenceDiagram
 - [x] Server Action `setSessionCookie` to bridge API authentication with cookie-based sessions
 - [x] Counter verification via `updateUserCounter`
 
-### Key Decisions
+### Phase 3 Key Decisions
+
 - **No Passwords:** Registration and login are strictly passkey-only.
 - **Session Management:** Use HTTP-only, Secure, SameSite=Lax cookies via `jose` JWT library.
 - **Counter Verification:** Prevent replay attacks by verifying authenticator counters.
@@ -168,7 +174,7 @@ sequenceDiagram
 
 ## Phase 4: Vault Encryption Layer (Post-Quantum Hybrid)
 
-**Status: ✅ Complete**
+Status: Complete
 
 **Goal:** Build a zero-knowledge, post-quantum resistant encryption system using a hybrid approach that combines NIST-standardized post-quantum algorithms with classical cryptography.
 
@@ -193,6 +199,7 @@ graph TD
 ```
 
 ### Key Derivation & Storage
+
 1. **Master Key Generation**: During registration, generate a random 256-bit `master_key` using `crypto.getRandomValues`.
 2. **Post-Quantum Keypair**: Generate a `ML-KEM-768` keypair using the `mlkem` library.
 3. **Classical Secret**: Generate a random 256-bit classical secret for hybrid encapsulation.
@@ -203,7 +210,8 @@ graph TD
 5. **Storage**: Store the `ML-KEM-768` public key, the encrypted master key (ciphertext), and the encrypted ML-KEM private key (wrapped by the server secret via AES-256-GCM) in SurrealDB.
 6. **Vault Entries**: For each entry, generate a random 96-bit IV and encrypt with `AES-256-GCM` using the `master_key`.
 
-### Completed Tasks
+### Phase 4 Completed Tasks
+
 - [x] Install post-quantum dependencies: `mlkem` (Module-Lattice-based KEM), `sha3` (for HKDF)
 - [x] Implement client-side `src/lib/pqcrypto.ts`:
   - `generateMLKEMKeypair()`
@@ -223,7 +231,8 @@ graph TD
   - Legacy user migration: on first login, generate PQ keys on-the-fly and store them.
 - [x] Add key recovery for legacy users: automatic PQ key generation for accounts created before PQC fields existed
 
-### Security Requirements
+### Phase 4 Security Requirements
+
 - **Hybrid Approach**: Always combines ML-KEM with a classical random secret. Ensures security even if a vulnerability is found in ML-KEM.
 - **Symmetric Cipher**: Use `AES-256-GCM` for vault entries. Post-quantum secure for data at rest.
 - **Key Derivation**: Use `HKDF-SHA-256` for all key derivation steps.
@@ -233,14 +242,14 @@ graph TD
 
 ## Phase 5: Core Vault API
 
-**Status: ✅ Complete**
+Status: Complete
 
 **Goal:** Develop CRUD endpoints for encrypted password entries.
 
 ### API Design
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+| ------ | -------- | ----------- |
 | GET | `/api/vault` | List all encrypted entries for the authenticated user (optionally filtered by `?group=`). Server-side decrypts if master key available. |
 | POST | `/api/vault` | Create a new encrypted entry |
 | GET | `/api/vault/[id]` | Retrieve a specific encrypted entry (with server-side decryption) |
@@ -252,7 +261,8 @@ graph TD
 | PUT | `/api/vault/groups/[id]` | Update a group |
 | DELETE | `/api/vault/groups/[id]` | Delete a group (unlinks entries) |
 
-### Completed Tasks
+### Phase 5 Completed Tasks
+
 - [x] Implement `GET /api/vault` with user-scoped queries and optional group filter
 - [x] Implement `POST /api/vault` to accept plaintext, encrypt server-side, and store encrypted blobs
 - [x] Implement `GET /api/vault/[id]` with ownership verification and decryption
@@ -263,7 +273,8 @@ graph TD
 - [x] Add structured audit logging via `logger` on all vault endpoints
 - [x] Implement `src/lib/vault.ts` data access layer with ownership checks
 
-### Pending Tasks
+### Phase 5 Pending Tasks
+
 - [ ] Implement rate limiting on all vault endpoints (e.g., 100 req/min)
 - [ ] Create `audit_log` table entries automatically on sensitive actions (table exists but not actively written to)
 
@@ -271,7 +282,7 @@ graph TD
 
 ## Phase 6: UI/UX Implementation
 
-**Status: ✅ Mostly Complete**
+Status: Mostly Complete
 
 **Goal:** Build a responsive, intuitive dashboard for managing the password vault.
 
@@ -288,7 +299,8 @@ graph TD
     D --> H[/vault/[id]]
 ```
 
-### Completed Tasks
+### Phase 6 Completed Tasks
+
 - [x] Create global layout with navigation, auth state, and custom fonts (Inter + JetBrains Mono)
 - [x] Build `/register` page with username input and passkey enrollment
 - [x] Build `/login` page with username input and passkey assertion
@@ -313,7 +325,8 @@ graph TD
 - [x] Build `PageHeader`, `AuthLayout`, `LoginForm`, `RegisterForm` components
 - [x] Implement cyberpunk/dark aesthetic with glass cards, neon accents, and animated backgrounds
 
-### Pending Tasks
+### Phase 6 Pending Tasks
+
 - [ ] Implement error boundaries
 - [ ] Add toast notifications
 - [ ] Ensure full keyboard navigation and screen reader accessibility audit
@@ -323,11 +336,12 @@ graph TD
 
 ## Phase 7: Security Hardening
 
-**Status: ⚠️ Partial**
+Status: Partial
 
 **Goal:** Implement defense-in-depth security measures.
 
-### Completed Tasks
+### Phase 7 Completed Tasks
+
 - [x] Configure security headers in `next.config.ts`:
   - `X-Frame-Options: DENY`
   - `X-Content-Type-Options: nosniff`
@@ -338,7 +352,8 @@ graph TD
 - [x] Account deletion requires fresh passkey re-authentication (`/api/auth/delete-account/options` + `/verify`)
 - [x] Conducted basic dependency audit — all core crypto dependencies (`mlkem`, `@simplewebauthn`, `jose`) are up to date
 
-### Pending Tasks
+### Phase 7 Pending Tasks
+
 - [ ] Configure strict Content Security Policy (CSP) headers in `next.config.js`
 - [ ] Enable `Strict-Transport-Security` (HSTS) headers
 - [ ] Implement API rate limiting using `rate-limiter-flexible` or Upstash Redis
@@ -353,11 +368,12 @@ graph TD
 
 ## Phase 8: Deployment & DevOps
 
-**Status: ⚠️ Mostly Complete**
+Status: Mostly Complete
 
 **Goal:** Containerize the application and set up a reproducible deployment pipeline.
 
-### Completed Tasks
+### Phase 8 Completed Tasks
+
 - [x] Create production `Dockerfile` for Next.js (multi-stage build with `output: standalone`)
 - [x] Create `docker-compose.yml` with:
   - Next.js app service
@@ -367,7 +383,8 @@ graph TD
 - [x] Write `README.md` with project overview
 - [x] Add `src/proxy.ts` for proxy configuration
 
-### Pending Tasks
+### Phase 8 Pending Tasks
+
 - [ ] Add Nginx reverse proxy service for SSL termination in Docker Compose
 - [ ] Create `.env.production` template with all required variables
 - [ ] Set up GitHub Actions CI/CD pipeline:
@@ -393,7 +410,7 @@ graph TD
 ## Technology Stack Summary
 
 | Layer | Technology |
-|-------|------------|
+| ----- | ---------- |
 | Framework | Next.js 16.2.6 (App Router) |
 | Language | TypeScript 5.x |
 | Styling | Tailwind CSS v4 |
@@ -411,7 +428,7 @@ graph TD
 ## Risk & Mitigation
 
 | Risk | Mitigation |
-|------|------------|
+| ---- | ---------- |
 | Master key loss (no password fallback) | Implement encrypted backup export/import flow |
 | Passkey platform lock-in | Support multiple passkeys per account (future) |
 | XSS stealing master key from memory | Minimize key lifetime in JS; server-side decryption keeps keys out of browser |
