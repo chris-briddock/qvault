@@ -28,6 +28,20 @@ jobs:
     - name: Check for outdated dependencies
       run: npm outdated || true
 
+    - name: Bump version (npm version)
+      id: pkg
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        npm version patch --no-git-tag-version
+        VERSION=$(node -p "require('./package.json').version")
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        git add package.json package-lock.json
+        git commit -m "chore: bump version to v$VERSION [skip ci]"
+        git push origin HEAD:main
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
@@ -46,7 +60,8 @@ jobs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=sha
+          type=raw,value=v${{ steps.pkg.outputs.version }},enable={{is_default_branch}}
+          type=raw,value=sha-${{ steps.pkg.outputs.sha }},enable={{is_default_branch}}
           type=raw,value={{date 'YYYY-MM-DD'}},enable={{is_default_branch}}
           type=raw,value=latest,enable={{is_default_branch}}
 
@@ -60,19 +75,6 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-
-    - name: Bump version (npm version)
-      id: pkg
-      if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        npm version patch --no-git-tag-version
-        VERSION=$(node -p "require('./package.json').version")
-        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-        git add package.json package-lock.json
-        git commit -m "chore: bump version to v$VERSION [skip ci]"
-        git push origin HEAD:main
 
     - name: Create Git Tag
       if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'

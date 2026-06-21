@@ -12,7 +12,7 @@
     "db:migrate": "tsx --env-file=.env migrations/runner.ts up",
     "db:rollback": "tsx --env-file=.env migrations/runner.ts down",
     "typecheck": "tsc --noEmit",
-    "version": "npm run version"
+    "version": "git add -A"
   },
   "dependencies": {
     "@noble/curves": "^2.2.0",

@@ -22,7 +22,9 @@ services:
       - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     depends_on:
-      - surrealdb
+      surrealdb:
+        condition: service_healthy
+    restart: on-failure
 
   app:
     build: .
@@ -47,8 +49,10 @@ services:
       - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
     depends_on:
-      - surrealdb
-      - migrator
+      surrealdb:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
 
   surrealdb:
     image: surrealdb/surrealdb:latest
