@@ -20,6 +20,7 @@ CMD ["npx", "tsx", "migrations/runner.ts", "up"]
 
 # Build the application
 FROM source AS builder
+ENV SKIP_ENV_VALIDATION=1
 RUN npm run build
 
 # Production image

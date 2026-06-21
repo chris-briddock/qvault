@@ -16,4 +16,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 });
 
-export const env = envSchema.parse(process.env);
+export const env =
+  process.env.SKIP_ENV_VALIDATION === "1"
+    ? (process.env as unknown as z.infer<typeof envSchema>)
+    : envSchema.parse(process.env);
