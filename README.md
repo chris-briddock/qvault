@@ -16,7 +16,7 @@ A zero-knowledge password manager built with Next.js 16 and SurrealDB. Uses pass
 ### Prerequisites
 
 - Node.js 24+
-- Docker & Docker Compose (for SurrealDB)
+- Docker & Docker Compose, or Podman & podman-compose (for SurrealDB)
 
 ### Development
 
@@ -54,10 +54,26 @@ SESSION_SECRET=your-32-byte-secret-here
 
 ### Production Deployment
 
+Create a `.env` file from `.env.local` and update secrets:
+
 ```bash
-# Build and run with Docker Compose
-docker-compose -f docker-compose.prod.yml up -d
+cp .env.local .env
+# Edit SESSION_SECRET and SERVER_SECRET to cryptographically secure values
 ```
+
+Start the production stack with Docker:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env up -d
+```
+
+Or with Podman:
+
+```bash
+podman-compose -f docker-compose.prod.yml --env-file .env up -d
+```
+
+The compose file will automatically run database migrations before starting the app.
 
 ## Security Model
 
