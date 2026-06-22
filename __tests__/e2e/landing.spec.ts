@@ -8,7 +8,7 @@ test.describe("Landing page", () => {
 
   test("has a link to the login page", async ({ page }) => {
     await page.goto("/");
-    const loginLink = page.getByRole("link", { name: /login|sign in|access/i });
+    const loginLink = page.getByRole("link", { name: /login|sign in|access/i }).first();
     await expect(loginLink).toBeVisible();
   });
 
@@ -16,7 +16,7 @@ test.describe("Landing page", () => {
     await page.goto("/");
     const registerLink = page.getByRole("link", {
       name: /register|create|get started/i,
-    });
+    }).first();
     await expect(registerLink).toBeVisible();
   });
 
