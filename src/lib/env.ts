@@ -18,5 +18,5 @@ const envSchema = z.object({
 
 export const env =
   process.env.SKIP_ENV_VALIDATION === "1"
-    ? (process.env as unknown as z.infer<typeof envSchema>)
+    ? (envSchema.partial().parse(process.env) as z.infer<typeof envSchema>)
     : envSchema.parse(process.env);
