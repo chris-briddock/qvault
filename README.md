@@ -36,30 +36,42 @@ npm run dev
 
 ### Environment Variables
 
-Copy `.env.local` and configure:
+Create a `.env.local` file in the project root with the following:
 
 ```bash
+# SurrealDB Configuration
 SURREALDB_URL=ws://localhost:8000/rpc
 SURREALDB_NS=qvault
 SURREALDB_DB=qvault
 SURREALDB_USER=root
 SURREALDB_PASS=root
 
+# WebAuthn Relying Party Configuration
 WEBAUTHN_RP_NAME=QVault
 WEBAUTHN_RP_ID=localhost
 WEBAUTHN_ORIGIN=http://localhost:3000
 
+# Session Configuration
 SESSION_SECRET=your-32-byte-secret-here
+SESSION_MAX_AGE=86400
+
+# Server Secret for encrypting ML-KEM private keys (must be >= 32 chars)
+SERVER_SECRET=replaceme
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME=QVault
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Generate secure values for `SESSION_SECRET` and `SERVER_SECRET` with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
 ### Production Deployment
 
-Create a `.env` file from `.env.local` and update secrets:
-
-```bash
-cp .env.local .env
-# Edit SESSION_SECRET and SERVER_SECRET to cryptographically secure values
-```
+Create a `.env` file with the same variables as above and update the secrets to cryptographically secure values:
 
 Start the production stack with Docker:
 
