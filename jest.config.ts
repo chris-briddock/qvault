@@ -23,7 +23,6 @@ const config: Config = {
     "<rootDir>/.next/",
     "<rootDir>/__tests__/e2e/",
   ],
-  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/.next/"],
   // Exclude .next and .kilo worktrees from Haste module map
   modulePathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/.kilo/"],
   collectCoverageFrom: [
