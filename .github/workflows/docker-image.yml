@@ -72,6 +72,8 @@ jobs:
     - name: Create Git Tag
       if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
         chmod +x ./create-tag.sh
         ./create-tag.sh "v${{ steps.pkg.outputs.version }}"
       env:
