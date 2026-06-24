@@ -338,7 +338,7 @@ export default function VaultEntryDetailPage() {
                 <label className="mb-1 block font-[family-name:var(--font-jetbrains-mono)] text-[10px] font-medium tracking-widest text-muted uppercase">
                   Notes
                 </label>
-                <div className="rounded border border-border bg-surface px-3 py-2 font-[family-name:var(--font-jetbrains-mono)] text-sm text-foreground whitespace-pre-wrap">
+                <div className="rounded border border-border bg-surface px-3 py-2 font-[family-name:var(--font-jetbrains-mono)] text-sm text-foreground overflow-scroll ">
                   {decryptedInfo.notes}
                 </div>
               </div>
